@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <!--<script src="widget.js"></script>-->
+
+    <style type="text/css">
+      .noteBlockHidden {
+        display: none;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <div id="noteBlock">
+      <audio src="" autoplay="false" id="noteBlockAudioPlayer"></audio>
+      <div class="noteBlockFrame noteBlockFrame_1 noteBlockHidden" id="noteBlockFrame_1">
+        <button class="noteBlockPlayFirstNote" id="noteBlockPlayFirstNote">Сыграть ноту</button>
+      </div>
+      <div class="noteBlockFrame noteBlockFrame_2 noteBlockHidden" id="noteBlockFrame_2">
+        <div class="noteBlockLabel_2" id="noteBlockLabel_2"></div>
+        <button class="noteBlockPlayAnotherNote" id="noteBlockPlayAnotherNote">Сыграть вторую</button>
+      </div>
+      <div class="noteBlockFrame noteBlockFrame_3 noteBlockHidden" id="noteBlockFrame_3">
+        <button class="noteBlockAnswerYes" id="noteBlockAnswerYes">Та же нота</button>
+        <button class="noteBlockAnswerNo" id="noteBlockAnswerNo">Другая нота</button>
+      </div>
+      <div class="noteBlockFrame noteBlockFrame_4 noteBlockHidden" id="noteBlockFrame_4">
+        <div class="noteBlockLabelCorrect" id="noteBlockLabelCorrect">
+          <strong>Да</strong>, это та же нота
+        </div>
+        <div class="noteBlockLabelIncorrect" id="noteBlockLabelIncorrect">
+          <strong>Нет</strong>, вы ошиблись
+        </div>
+        <button class="noteBlockRepeat" id="noteBlockRepeat">Повторить</button>
+      </div>
+    </div>
+
+    <script>
+
+      var NOTE_BLOCK_ID                 = 'noteBlock',
+          NOTE_BLOCK_FRAME_1_ID         = 'noteBlockFrame_1',
+          NOTE_BLOCK_FRAME_2_ID         = 'noteBlockFrame_2',
+          NOTE_BLOCK_FRAME_3_ID         = 'noteBlockFrame_3',
+          NOTE_BLOCK_FRAME_4_ID         = 'noteBlockFrame_4',
+          AUDIO_PLAYER_ID               = 'noteBlockAudioPlayer',
+          HOTEL_BLOCK_FRAME_2_LABEL_ID  = 'noteBlockLabel_2'
+          NOTE_BLOCK_HIDDEN_CLASS       = 'noteBlockHidden',
+          NOTE_BLOCK_FRAME_CLASS        = 'noteBlockFrame',
+          FRAME_2_LABEL_TEMPLATE        = 'Прошло %{dt} сек.';
+          
+      var noteBlock,
+          noteBlockFrame1,
+          noteBlockFrame2,
+          noteBlockFrame3,
+          noteBlockFrame4,
+          audioPlayer,
+          timeLeftTimer;
+
+      function tmpl( template, params ) {
+        var result = template;
+        for ( var i in params ) {
+          if ( params.hasOwnProperty( i ) ) {
+            result = result.replace( new RegExp( '%{' + i + '}', 'g' ), params[ i ] );
+          }
+        }
+
+        return result;
+      }
+
+      function hideAllFrames(cb) {
+        var frames = [
+          noteBlockFrame1,
+          noteBlockFrame2,
+          noteBlockFrame3,
+          noteBlockFrame4
+        ];
+        frames.forEach(function(frame) {
+          frame.classList.add(NOTE_BLOCK_HIDDEN_CLASS);
+        });
+        if (isFunction(cb)) {
+          cb();
+        }
+      }
+
+      function playNote(cb) {
+        if (isFunction(cb)) {
+          cb();
+        }
+      }
+
+      function showFrame(frame) {
+        frame.classList.remove(NOTE_BLOCK_HIDDEN_CLASS);
+      }
+
+      function isFunction(arg) {
+        return '[object Function]' == Object.prototype.toString.call(arg);
+      }
+
+      function initState1() {
+        var playButton = noteBlockFrame1.querySelector('button');
+        playButton.addEventListener('click', function(e) {
+          playNote(function() {
+            gotoState2();
+          });
+        }, false);
+      }
+
+      function initState2() {
+      
+      }
+
+      function initState3() {
+      
+      }
+
+      function initState4() {
+        
+      }
+
+      function gotoState1() {
+        hideAllFrames(function() {
+          showFrame(noteBlockFrame1);
+        });
+      }
+
+      function gotoState2() {
+
+        var label = noteBlockFrame2.querySelector('#' + HOTEL_BLOCK_FRAME_2_LABEL_ID);
+
+        label.innerHTML = '';
+
+        function updateTimePassedLabel(dt) {
+          label.innerHTML = tmpl(FRAME_2_LABEL_TEMPLATE, { dt: dt });
+        }
+
+        updateTimePassedLabel(0);
+
+        hideAllFrames(function() {
+          showFrame(noteBlockFrame2);
+          var dt          = 0,
+              timeOffset  = 1000;
+          window.setInterval(function() {
+            dt++;
+            updateTimePassedLabel(dt);
+          }, timeOffset);
+        });
+      }
+
+      function gotoState3() {
+        window.clearInterval(timeLeftTimer);
+      }
+
+      function gotoState4() {
+        
+      }
+
+      function init() {
+        noteBlock       = document.getElementById(NOTE_BLOCK_ID);
+        noteBlockFrame1 = noteBlock.querySelector('#' + NOTE_BLOCK_FRAME_1_ID);
+        noteBlockFrame2 = noteBlock.querySelector('#' + NOTE_BLOCK_FRAME_2_ID);
+        noteBlockFrame3 = noteBlock.querySelector('#' + NOTE_BLOCK_FRAME_3_ID);
+        noteBlockFrame4 = noteBlock.querySelector('#' + NOTE_BLOCK_FRAME_4_ID);
+        audioPlayer     = noteBlock.querySelector('#' + AUDIO_PLAYER_ID);
+        initState1();
+        initState2();
+        initState3();
+        initState4();
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        init();
+        gotoState1();
+      }, false);
+
+    </script>
+  </body>
+
+</html>
