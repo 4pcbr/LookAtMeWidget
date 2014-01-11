@@ -9,6 +9,22 @@
       .noteBlockHidden {
         display: none;
       }
+      .noteBlockFrame_4 .noteBlockLabelCorrect,
+      .noteBlockFrame_4 .noteBlockLabelIncorrect {
+        display: none;
+      }
+      .noteBlockFrame_4.correct .noteBlockLabelCorrect {
+        display: block;
+      }
+      .noteBlockFrame_4.correct .noteBlockLabelIncorrect {
+        display: none;
+      }
+      .noteBlockFrame_4.incorrect .noteBlockLabelCorrect {
+        display: none;
+      }
+      .noteBlockFrame_4.incorrect .noteBlockLabelIncorrect {
+        display: block;
+      }
     </style>
 
   </head>
@@ -24,12 +40,12 @@
         <button class="noteBlockPlayAnotherNote" id="noteBlockPlayAnotherNote">Сыграть вторую</button>
       </div>
       <div class="noteBlockFrame noteBlockFrame_3 noteBlockHidden" id="noteBlockFrame_3">
-        <button class="noteBlockAnswerYes" id="noteBlockAnswerYes">Та же нота</button>
-        <button class="noteBlockAnswerNo" id="noteBlockAnswerNo">Другая нота</button>
+        <button value="1" class="noteBlockAnswerYes" id="noteBlockAnswerYes">Та же нота</button>
+        <button value="0" class="noteBlockAnswerNo" id="noteBlockAnswerNo">Другая нота</button>
       </div>
       <div class="noteBlockFrame noteBlockFrame_4 noteBlockHidden" id="noteBlockFrame_4">
         <div class="noteBlockLabelCorrect" id="noteBlockLabelCorrect">
-          <strong>Да</strong>, это та же нота
+          <strong>Да</strong>, верно
         </div>
         <div class="noteBlockLabelIncorrect" id="noteBlockLabelIncorrect">
           <strong>Нет</strong>, вы ошиблись
@@ -46,10 +62,15 @@
           NOTE_BLOCK_FRAME_3_ID         = 'noteBlockFrame_3',
           NOTE_BLOCK_FRAME_4_ID         = 'noteBlockFrame_4',
           AUDIO_PLAYER_ID               = 'noteBlockAudioPlayer',
-          HOTEL_BLOCK_FRAME_2_LABEL_ID  = 'noteBlockLabel_2'
+          NOTE_BLOCK_FRAME_2_LABEL_ID   = 'noteBlockLabel_2',
+          BUTTON_ANSWER_YES_ID          = 'noteBlockAnswerYes',
+          BUTTON_ANSWER_NO_ID           = 'noteBlockAnswerNo',
           NOTE_BLOCK_HIDDEN_CLASS       = 'noteBlockHidden',
           NOTE_BLOCK_FRAME_CLASS        = 'noteBlockFrame',
-          FRAME_2_LABEL_TEMPLATE        = 'Прошло %{dt} сек.';
+          CORRECT_CLASS                 = 'correct',
+          INCORRECT_CLASS               = 'incorrect',
+          FRAME_2_LABEL_TEMPLATE        = 'Прошло %{dt} сек.',
+          NOTES                         = [ 'B3', 'C4', 'C4#' ];
           
       var noteBlock,
           noteBlockFrame1,
@@ -57,7 +78,8 @@
           noteBlockFrame3,
           noteBlockFrame4,
           audioPlayer,
-          timeLeftTimer;
+          timeLeftTimer,
+          notes;
 
       function tmpl( template, params ) {
         var result = template;
@@ -86,9 +108,19 @@
       }
 
       function playNote(cb) {
+        if (!notes) {
+          notes = [];
+        }
+        var note = Math.round(Math.random() * (NOTES.length - 1));
+        notes.push(note);
         if (isFunction(cb)) {
           cb();
         }
+      }
+
+      function hasPlayedSameNote() {
+        return  (notes.length > 1) &&
+                (notes[notes.length - 1] === notes[notes.length - 2]);
       }
 
       function showFrame(frame) {
@@ -109,15 +141,35 @@
       }
 
       function initState2() {
-      
+        var button = noteBlockFrame2.querySelector('button');
+        button.addEventListener('click', function() {
+          gotoState3();
+        }, false);
       }
 
       function initState3() {
-      
+        var buttons = noteBlockFrame3.querySelectorAll(
+          [
+            '#' + BUTTON_ANSWER_NO_ID,
+            '#' + BUTTON_ANSWER_YES_ID
+          ].join(',')
+        );
+        buttons = Array.prototype.slice.call(buttons, 0);
+        buttons.forEach(function(button) {
+          button.addEventListener('click', function() {
+            gotoState4(this.value);
+          }, false);
+        });
       }
 
       function initState4() {
-        
+        var button = noteBlockFrame4.querySelector('button');
+        button.addEventListener('click', function() {
+          var cl = noteBlockFrame4.classList;
+          cl.remove(CORRECT_CLASS);
+          cl.remove(INCORRECT_CLASS);
+          gotoState1();
+        }, false);
       }
 
       function gotoState1() {
@@ -128,7 +180,7 @@
 
       function gotoState2() {
 
-        var label = noteBlockFrame2.querySelector('#' + HOTEL_BLOCK_FRAME_2_LABEL_ID);
+        var label = noteBlockFrame2.querySelector('#' + NOTE_BLOCK_FRAME_2_LABEL_ID);
 
         label.innerHTML = '';
 
@@ -142,7 +194,7 @@
           showFrame(noteBlockFrame2);
           var dt          = 0,
               timeOffset  = 1000;
-          window.setInterval(function() {
+          timeLeftTimer = window.setInterval(function() {
             dt++;
             updateTimePassedLabel(dt);
           }, timeOffset);
@@ -150,11 +202,25 @@
       }
 
       function gotoState3() {
-        window.clearInterval(timeLeftTimer);
+        hideAllFrames(function() {
+          window.clearInterval(timeLeftTimer);
+          playNote(function() {
+            showFrame(noteBlockFrame3);
+          });
+        });
       }
 
-      function gotoState4() {
-        
+      function gotoState4(answer) {
+        answer = !!answer;
+        hideAllFrames(function() {
+          if (answer == hasPlayedSameNote()) {
+            noteBlockFrame4.classList.add(CORRECT_CLASS);
+          } else {
+            noteBlockFrame4.classList.add(INCORRECT_CLASS);
+          }
+          showFrame(noteBlockFrame4);
+          notes = [];
+        });
       }
 
       function init() {
